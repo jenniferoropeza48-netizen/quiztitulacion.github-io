@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz: ¿Cuál es tu match ideal con la titulación?</title>
+<style>
+  :root{
+    --primary:#E91E63; /* rosa 14F */
+    --primary-dark:#C2185B;
+    --accent:#8E24AA;
+    --ok:#2e7d32;
+    --bg:#fff7fb;
+    --card:#ffffff;
+    --ink:#2b2b2b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";}
+  .wrap{max-width:940px;margin:0 auto;padding:24px}
+  header{display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin-bottom:16px}
+  h1{margin:0;font-size:clamp(1.4rem,2.5vw,2.2rem);color:var(--primary)}
+  .sub{color:#555;margin:0}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:18px;margin:12px 0}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  label{font-weight:600}
+  input[type="text"],input[type="date"],select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px}
+
+  .progress{height:10px;background:#fde;
+    border-radius:999px;overflow:hidden;margin:10px 0 0}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .35s ease}
+
+  .q{padding:16px;border:1px solid #f1d3e0;border-radius:12px;margin:16px 0}
+  .q h3{margin:0 0 10px;font-size:1.05rem}
+  .opts{display:grid;gap:8px}
+  .opt{border:1px solid #eee;border-radius:10px;padding:12px;display:flex;gap:10px;align-items:center;cursor:pointer;background:#fff;transition:all .2s}
+  .opt:hover{border-color:#f48fb1;background:#fff5f9}
+  .opt input{accent-color:var(--primary)}
+
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+  button{appearance:none;border:0;border-radius:999px;background:var(--primary);color:#fff;padding:12px 18px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(233,30,99,.25);transition:transform .05s}
+  button:hover{background:var(--primary-dark)}
+  button:active{transform:translateY(1px)}
+  button.outline{background:#fff;color:var(--primary);border:2px solid var(--primary)}
+
+  .hidden{display:none !important}
+  .result{display:grid;gap:12px}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffe3ec;color:var(--primary);font-weight:800}
+  .pill{display:inline-block;padding:4px 10px;border:1px dashed #ccc;border-radius:999px;font-size:.9rem}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:720px){.cols{grid-template-columns:1fr}}
+  .footer{font-size:.9rem;color:#666;margin-top:8px}
+  .heart{color:var(--primary)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>💘 Quiz: ¿Cuál es tu match ideal con la titulación?</h1>
+      <p class="sub">14 de febrero • Actividad para todos los cuatrimestres • Modalidades: <span class="pill">Automática</span> <span class="pill">Tesis</span> <span class="pill">Examen general de conocimientos</span> <span class="pill">Posgrado</span></p>
+    </header>
+
+    <section class="card">
+      <div class="meta">
+        <div>
+          <label>Nombre (opcional)</label>
+          <input type="text" id="nombre" placeholder="Escribe tu nombre" />
+        </div>
+        <div>
+          <label>Carrera</label>
+          <input type="text" id="carrera" placeholder="Ing. / Lic. / TSU / etc." />
+        </div>
+        <div>
+          <label>Cuatrimestre</label>
+          <select id="cuatri">
+            <option value="">Selecciona…</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option>
+          </select>
+        </div>
+        <div>
+          <label>Fecha</label>
+          <input type="date" id="fecha" />
+        </div>
+      </div>
+    </section>
+
+    <section id="quiz" class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>Preguntas</strong>
+        <div class="progress" aria-label="Progreso"><div class="bar" id="bar"></div></div>
+      </div>
+
+      <div id="qwrap"></div>
+
+      <div class="actions">
+        <button id="btnPrev" class="outline" disabled>Anterior</button>
+        <button id="btnNext">Siguiente</button>
+        <button id="btnFinish" class="hidden">Ver resultado</button>
+      </div>
+    </section>
+
+    <section id="resultado" class="card hidden">
+      <div class="result">
+        <span class="badge">Tu resultado</span>
+        <h2 id="titulo"></h2>
+        <p id="desc"></p>
+        <div class="cols">
+          <div>
+            <h3>🎯 ¿Por qué este match?</h3>
+            <ul id="bullets"></ul>
+          </div>
+          <div>
+            <h3>📝 Recomendaciones</h3>
+            <ul id="recos"></ul>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btnReiniciar" class="outline">Reiniciar</button>
+          <button id="btnImprimir">Imprimir</button>
+        </div>
+        <p class="footer">💬 <em>“No importa en qué cuatrimestre estés… tu camino hacia la titulación ya comenzó.”</em></p>
+      </div>
+    </section>
+
+    <p class="footer">Hecho con <span class="heart">❤</span> para actividades del 14F | Versión interactiva sin conexión</p>
+  </div>
+
+<script>
+const preguntas = [
+  {
+    t: "Cuando piensas en tu cierre de carrera, tú…",
+    a: [
+      {k:"A", txt:"Quiero cumplir con todos los requisitos y terminar sin complicaciones"},
+      {k:"B", txt:"Me gustaría investigar y desarrollar un tema a fondo"},
+      {k:"C", txt:"Prefiero demostrar lo que ya sé con un examen"},
+      {k:"D", txt:"Me interesa seguir estudiando un posgrado"},
+    ]
+  },
+  {
+    t: "Tu forma de trabajar es más…",
+    a: [
+      {k:"A", txt:"Constante y responsable"},
+      {k:"B", txt:"Analítica y detallista"},
+      {k:"C", txt:"Práctica y rápida"},
+      {k:"D", txt:"Académica y orientada al crecimiento"},
+    ]
+  },
+  {
+    t: "¿Qué te da más tranquilidad?",
+    a: [
+      {k:"A", txt:"Saber que voy avanzando paso a paso"},
+      {k:"B", txt:"Tener un proyecto bien estructurado"},
+      {k:"C", txt:"Prepararme y presentar una sola evaluación"},
+      {k:"D", txt:"Continuar mis estudios y especializarme"},
+    ]
+  },
+  {
+    t: "En clase normalmente tú…",
+    a: [
+      {k:"A", txt:"Cumples con todo en tiempo y forma"},
+      {k:"B", txt:"Te gusta investigar y participar"},
+      {k:"C", txt:"Resolver bajo presión no es problema"},
+      {k:"D", txt:"Piensas en tu futuro académico o profesional"},
+    ]
+  },
+  {
+    t: "Elige la frase con la que más te identificas:",
+    a: [
+      {k:"A", txt:"Prefiero hacerlo bien desde ahora para no batallar después"},
+      {k:"B", txt:"Me gusta profundizar y aprender más"},
+      {k:"C", txt:"Si sé los temas, puedo demostrarlos"},
+      {k:"D", txt:"Quiero seguir creciendo académicamente"},
+    ]
+  },
+  {
+    t: "¿Cómo te sientes con los trámites y requisitos?",
+    a: [
+      {k:"A", txt:"Si están claros, no hay problema"},
+      {k:"B", txt:"Los acepto como parte del proceso"},
+      {k:"C", txt:"Prefiero los mínimos necesarios"},
+      {k:"D", txt:"Los veo como parte de una meta mayor"},
+    ]
+  },
+  {
+    t: "¿Qué te gustaría que reflejara tu titulación?",
+    a: [
+      {k:"A", txt:"Mi constancia durante la carrera"},
+      {k:"B", txt:"Mi capacidad de análisis e investigación"},
+      {k:"C", txt:"Mis conocimientos generales de la carrera"},
+      {k:"D", txt:"Mi interés por seguir preparándome"},
+    ]
+  }
+];
+
+const mapping = {
+  A: {
+    titulo: "💗 Titulación Automática",
+    desc: "Eres responsable y constante. La titulación automática reconoce tu desempeño a lo largo de la carrera.",
+    bullets:[
+      "Valora tu avance continuo y cumplimiento.",
+      "Minimiza trámites adicionales al final.",
+      "Premia la constancia durante todos los cuatrimestres.",
+    ],
+    recos:[
+      "Cuida tu promedio y no descuides ninguna materia.",
+      "Mantén al día tus créditos, residencias y servicio.",
+      "Consulta fechas y requisitos de tu control escolar.",
+    ]
+  },
+  B: {
+    titulo: "💗 Tesis",
+    desc: "Te gusta profundizar e investigar. La tesis te permite demostrar tu pensamiento crítico y aportar a tu campo.",
+    bullets:[
+      "Exploras a fondo un tema que te apasiona.",
+      "Desarrollas habilidades de investigación y redacción.",
+      "Deja evidencia sólida para tu portafolio profesional.",
+    ],
+    recos:[
+      "Elige un tema acotado y con fuentes disponibles.",
+      "Busca asesor(a) con experiencia en tu línea.",
+      "Define un cronograma realista y cúmplelo.",
+    ]
+  },
+  C: {
+    titulo: "💗 Examen General de Conocimientos",
+    desc: "Eres práctico/a y resolutivo/a. Puedes validar lo aprendido en una evaluación integral.",
+    bullets:[
+      "Concentra el cierre en una sola evaluación.",
+      "Demuestra dominio global del plan de estudios.",
+      "Permite titularte en menor tiempo si te preparas bien.",
+    ],
+    recos:[
+      "Repasa temarios oficiales y guías por área.",
+      "Practica con reactivos tipo y simuladores.",
+      "Refuerza tus áreas débiles con tutorías.",
+    ]
+  },
+  D: {
+    titulo: "💗 Posgrado",
+    desc: "Tienes visión a largo plazo. El posgrado te ayuda a especializarte y abrir nuevas oportunidades.",
+    bullets:[
+      "Profundiza en un área de especialidad.",
+      "Fortalece tu perfil académico y profesional.",
+      "Amplía tu red de contactos y proyectos.",
+    ],
+    recos:[
+      "Explora programas, requisitos y becas con tiempo.",
+      "Fortalece inglés y habilidades de investigación.",
+      "Prepara CV, carta de motivos y referencias.",
+    ]
+  }
+};
+
+let idx = 0;
+const answers = new Array(preguntas.length).fill(null);
+
+const qwrap = document.getElementById('qwrap');
+const bar = document.getElementById('bar');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+const btnFinish = document.getElementById('btnFinish');
+const resultado = document.getElementById('resultado');
+
+function render(){
+  qwrap.innerHTML = '';
+  const q = preguntas[idx];
+  const qDiv = document.createElement('div');
+  qDiv.className = 'q';
+  const h = document.createElement('h3');
+  h.textContent = `${idx+1}. ${q.t}`;
+  qDiv.appendChild(h);
+
+  const opts = document.createElement('div');
+  opts.className = 'opts';
+
+  q.a.forEach((op,i)=>{
+    const id = `q${idx}_opt${i}`;
+    const lab = document.createElement('label');
+    lab.className = 'opt';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = `q${idx}`;
+    radio.value = op.k;
+    radio.id = id;
+    if(answers[idx]===op.k) radio.checked = true;
+    radio.addEventListener('change', e=>{
+      answers[idx] = e.target.value;
+      updateButtons();
+    });
+
+    const span = document.createElement('span');
+    span.textContent = `(${op.k}) ${op.txt}`;
+
+    lab.appendChild(radio);
+    lab.appendChild(span);
+    opts.appendChild(lab);
+  });
+
+  qDiv.appendChild(opts);
+  qwrap.appendChild(qDiv);
+
+  const p = (answers.filter(x=>x!==null).length / preguntas.length) * 100;
+  bar.style.width = `${p}%`;
+  updateButtons();
+}
+
+function updateButtons(){
+  btnPrev.disabled = idx===0;
+  const hasAns = answers[idx]!==null;
+  btnNext.disabled = !hasAns || idx===preguntas.length-1;
+  btnFinish.classList.toggle('hidden', !(hasAns && idx===preguntas.length-1));
+}
+
+btnPrev.addEventListener('click', ()=>{ idx=Math.max(0, idx-1); render(); });
+btnNext.addEventListener('click', ()=>{ if(answers[idx]) { idx=Math.min(preguntas.length-1, idx+1); render(); }});
+btnFinish.addEventListener('click', ()=>{
+  if(answers.includes(null)) return;
+  const tally = {A:0,B:0,C:0,D:0};
+  answers.forEach(k=>tally[k]++);
+  // empate: preferencia por respuestas más avanzadas según orden D>C>B>A
+  const order = ['D','C','B','A'];
+  let best = 'A', bestVal = -1;
+  Object.keys(tally).forEach(k=>{
+    if(tally[k]>bestVal || (tally[k]===bestVal && order.indexOf(k)<order.indexOf(best))) {
+      best=k; bestVal=tally[k];
+    }
+  });
+  showResult(best, tally);
+});
+
+function showResult(letter, tally){
+  document.getElementById('quiz').classList.add('hidden');
+  resultado.classList.remove('hidden');
+  const data = mapping[letter];
+  document.getElementById('titulo').textContent = `${data.titulo}`;
+  document.getElementById('desc').textContent = data.desc;
+
+  const bullets = document.getElementById('bullets');
+  bullets.innerHTML='';
+  data.bullets.forEach(b=>{
+    const li=document.createElement('li'); li.textContent=b; bullets.appendChild(li);
+  });
+
+  const recos = document.getElementById('recos');
+  recos.innerHTML='';
+  data.recos.forEach(b=>{
+    const li=document.createElement('li'); li.textContent=b; recos.appendChild(li);
+  });
+}
+
+// Extras
+const btnReiniciar = document.getElementById('btnReiniciar');
+btnReiniciar.addEventListener('click', ()=>{
+  idx=0; for(let i=0;i<answers.length;i++) answers[i]=null;
+  document.getElementById('quiz').classList.remove('hidden');
+  resultado.classList.add('hidden');
+  render();
+});
+
+const btnImprimir = document.getElementById('btnImprimir');
+btnImprimir.addEventListener('click', ()=> window.print());
+
+// set default date = today
+(function(){
+  try{
+    const d = new Date();
+    const iso = d.toISOString().slice(0,10);
+    document.getElementById('fecha').value = iso;
+  }catch(e){}
+})();
+
+// initial
+render();
+</script>
+</body>
+</html>
